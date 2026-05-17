@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DeskPi 7.84" kiosk mock — 1280×400</title>
+<style>
+  :root{--bg:#0f1320;--panel:#1a2030;--panel2:#222a3d;--ink:#e7ecf5;--mut:#8b97b0;--ok:#3fbf6f;--warn:#e3b341;--bad:#e5534b;--accent:#5b8def;--se:#5b8def;--br:#c879e8;--sab:#3fbf6f}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif}
+  body{background:#05070d;color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:14px;padding:24px}
+  .cap{color:#9fb0cf;font-size:13px;letter-spacing:.04em;text-align:center}
+  .cap b{color:#fff}
+  .device{width:1280px;height:400px;background:var(--bg);border:10px solid #000;border-radius:14px;box-shadow:0 0 0 2px #2a3550,0 18px 50px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column;transform-origin:top center}
+  .topbar{height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:linear-gradient(180deg,#1c2334,#141a28);border-bottom:1px solid #2a3550}
+  .topbar .l{font-weight:700;letter-spacing:.03em}
+  .topbar .c{display:flex;align-items:center;gap:12px;color:#9fb0cf;font-size:12px;text-transform:uppercase;letter-spacing:.16em}
+  .topbar .r{display:flex;align-items:center;gap:10px;font-variant-numeric:tabular-nums;color:#cdd8ee;font-size:13px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .dots{display:flex;gap:6px}
+  .dots i{width:6px;height:6px;border-radius:50%;background:#3a4763;transition:.2s}
+  .dots i.on{background:var(--accent);width:16px;border-radius:3px}
+  .content{flex:1;position:relative;overflow:hidden;touch-action:pan-y}
+  .track{display:flex;width:500%;height:100%;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+  .view{flex:0 0 20%;display:flex;gap:12px;padding:12px 14px;align-items:stretch}
+  .tabbar{height:54px;flex:0 0 54px;display:flex;border-top:1px solid #2a3550;background:#121829}
+  .tab{flex:1;border:none;background:transparent;color:#8b97b0;font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border-right:1px solid #222b40;transition:.15s}
+  .tab:last-child{border-right:none}
+  .tab .ic{font-size:18px}
+  .tab.on{color:#fff;background:linear-gradient(180deg,#243150,#1a2335);box-shadow:inset 0 -3px 0 var(--accent)}
+  .tab:active{background:#2a3756}
+  .col{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+  .card{background:var(--panel);border:1px solid #28324a;border-radius:10px;padding:11px 12px;display:flex;flex-direction:column;gap:7px}
+  .card h3{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#93a1c2;font-weight:700}
+  .big{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .sub{font-size:11px;color:#8b97b0}
+  .bar{height:8px;background:#0d1322;border-radius:6px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:6px;background:var(--ok);transition:width .5s,background .5s}
+  .kv{display:flex;justify-content:space-between;font-size:13px;align-items:center}
+  .kv .v{font-weight:700;font-variant-numeric:tabular-nums}
+  .list{display:flex;flex-direction:column;gap:5px;overflow:auto}
+  .li{display:flex;justify-content:space-between;font-size:13px;padding:6px 8px;background:#161d2e;border-radius:6px}
+  .pill{font-size:11px;padding:2px 7px;border-radius:99px;font-weight:700}
+  .scalebar{display:flex;gap:8px;align-items:center}
+  .scalebar button{background:#1c2740;color:#cdd8ee;border:1px solid #33425f;border-radius:7px;padding:6px 12px;cursor:pointer;font-size:12px}
+  .scalebar button:hover{background:#26344f}
+
+  /* ---- Overview: cluster health ---- */
+  .ov{display:flex;flex-direction:column;gap:11px;width:100%}
+  .nrow{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;flex:1;min-height:0}
+  .ncard{background:var(--panel);border:1px solid #28324a;border-radius:10px;padding:10px 11px;display:flex;flex-direction:column;gap:6px}
+  .nhead{display:flex;align-items:center;justify-content:space-between}
+  .nhead .nm{font-weight:700;font-size:14px}
+  .badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase;letter-spacing:.06em}
+  .badge.ok{background:#15331f;color:var(--ok)}
+  .spark{width:100%;height:34px;display:block}
+  .nmetrics{display:flex;flex-direction:column;gap:5px}
+  .ingest{background:var(--panel);border:1px solid #28324a;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  .ih{display:flex;align-items:center;justify-content:space-between}
+  .ih h3{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#93a1c2;font-weight:700}
+  .istat{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;letter-spacing:.06em}
+  .istat.ok{background:#15331f;color:var(--ok)}
+  .istat.warn{background:#33301a;color:var(--warn)}
+  .istat.bad{background:#3a1d1d;color:var(--bad)}
+  .igbar{position:relative;height:20px;background:#0d1322;border-radius:6px;overflow:hidden;display:flex}
+  .igbar .seg{height:100%;transition:width .5s}
+  .seg.sab{background:var(--sab)}.seg.se{background:var(--se)}.seg.br{background:var(--br)}
+  .ceil{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff;opacity:.85}
+  .ceil span{position:absolute;top:-15px;left:4px;font-size:10px;color:#cdd8ee;white-space:nowrap}
+  .ilegend{display:flex;gap:16px;font-size:12px;align-items:center;flex-wrap:wrap}
+  .ilegend .sw{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+  .ilegend b{font-variant-numeric:tabular-nums}
+  .ilegend .tot{margin-left:auto;color:#cdd8ee}
+
+  /* ---- action toggle buttons ---- */
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+  .act{flex:1;min-width:120px;border:1px solid #34415e;background:#1b2336;color:#cdd8ee;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:.15s;-webkit-tap-highlight-color:transparent}
+  .act:active{transform:scale(.97)}
+  .act .led{width:8px;height:8px;border-radius:50%;background:#3fbf6f;box-shadow:0 0 6px #3fbf6f}
+  .act.active{background:linear-gradient(180deg,#3a2030,#2a1722);border-color:var(--bad);color:#ffd9d6}
+  .act.active .led{background:var(--bad);box-shadow:0 0 7px var(--bad);animation:pulse 1.4s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .act.global{flex:0 0 100%}
+
+  .nodes{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;flex:1}
+  .donut{width:88px;height:88px;border-radius:50%;background:conic-gradient(var(--ok) 0 78%,#26314a 78% 100%);display:flex;align-items:center;justify-content:center;align-self:center}
+  .donut > div{width:60px;height:60px;border-radius:50%;background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .donut b{font-size:18px}
+</style>
+</head>
+<body>
+  <div class="cap"><b>DeskPi 7.84"</b> · 1280×400 letterbox · <b>swipe</b> or tap tabs to move · action buttons are toggle mocks (no real API call) · <b>placeholder data</b></div>
+  <div class="scalebar">
+    <span class="cap">view:</span>
+    <button onclick="setScale('fit')">Fit to window</button>
+    <button onclick="setScale(1)">1:1 (actual size)</button>
+  </div>
+  <div class="device" id="dev">
+    <div class="topbar">
+      <div class="l">🏠 Homelab</div>
+      <div class="c"><span id="vname">Overview</span><span class="dots" id="dots"></span></div>
+      <div class="r"><span class="dot" style="background:var(--ok)"></span><span id="clock">--:--:--</span></div>
+    </div>
+    <div class="content" id="content">
+     <div class="track" id="track">
+
+      <!-- ===== OVERVIEW — cluster health ===== -->
+      <section class="view" data-v="Overview">
+        <div class="ov">
+          <div class="nrow" id="ovNodes"></div>
+          <div class="ingest">
+            <div class="ih">
+              <h3>Download ingest → NAS write path</h3>
+              <span class="istat ok" id="istat">OK</span>
+            </div>
+            <div class="igbar" id="igbar">
+              <i class="seg sab" id="segSab" style="width:18%"></i>
+              <i class="seg se"  id="segSe"  style="width:14%"></i>
+              <i class="seg br"  id="segBr"  style="width:9%"></i>
+              <span class="ceil" style="left:37.5%"><span>NAS ~30 MB/s ceiling</span></span>
+            </div>
+            <div class="ilegend">
+              <span><i class="sw" style="background:var(--sab)"></i>SABnzbd <b class="j" data-min="0" data-max="55" data-suf=" MB/s">14 MB/s</b></span>
+              <span><i class="sw" style="background:var(--se)"></i>qbt-se <b class="j" data-min="0" data-max="22" data-suf=" MB/s">11 MB/s</b></span>
+              <span><i class="sw" style="background:var(--br)"></i>qbt-br <b class="j" data-min="0" data-max="22" data-suf=" MB/s">7 MB/s</b></span>
+              <span class="tot">Σ ingest <b id="itot">32 MB/s</b> · NAS sustains ~30 MB/s</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== NODES — all hosts ===== -->
+      <section class="view" data-v="Nodes">
+        <div class="nodes" id="nodeGrid"></div>
+      </section>
+
+      <!-- ===== K3S ===== -->
+      <section class="view" data-v="k3s">
+        <div class="col" style="flex:2">
+          <div class="card" style="flex:1"><h3>workload</h3>
+            <div class="kv"><span>Pods Running</span><span class="v" style="color:var(--ok)"><span class="j" data-min="78" data-max="86">82</span></span></div>
+            <div class="kv"><span>Pending / Failed</span><span class="v">1 / 0</span></div>
+            <div class="kv"><span>Deployments ready</span><span class="v">29 / 29</span></div>
+            <div class="kv"><span>Cluster CPU</span><span class="v"><span class="j" data-min="20" data-max="55" data-suf="%">34%</span></span></div>
+            <div class="kv"><span>Cluster Mem</span><span class="v"><span class="j" data-min="40" data-max="70" data-suf="%">58%</span></span></div>
+            <div class="kv"><span>Longhorn volumes</span><span class="v" style="color:var(--ok)">healthy</span></div>
+          </div>
+        </div>
+        <div class="col" style="flex:3">
+          <div class="card" style="flex:1"><h3>top pods (cpu)</h3>
+            <div class="list">
+              <div class="li"><span>plex / plex-0</span><span><span class="j" data-min="8" data-max="40" data-suf="%">22%</span></span></div>
+              <div class="li"><span>media / sonarr</span><span><span class="j" data-min="2" data-max="15" data-suf="%">7%</span></span></div>
+              <div class="li"><span>media / sabnzbd</span><span><span class="j" data-min="3" data-max="30" data-suf="%">11%</span></span></div>
+              <div class="li"><span>media / qbt-se</span><span><span class="j" data-min="2" data-max="20" data-suf="%">8%</span></span></div>
+              <div class="li"><span>kube-extra / prometheus</span><span><span class="j" data-min="2" data-max="12" data-suf="%">5%</span></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== DOWNLOADS — multi-instance + actions ===== -->
+      <section class="view" data-v="Downloads">
+        <div class="col" style="flex:1">
+          <div class="card" style="flex:1"><h3>SABnzbd</h3>
+            <div class="big" style="color:var(--sab)"><span class="j" data-min="0" data-max="55" data-suf=" MB/s">14 MB/s</span></div>
+            <div class="kv"><span>Queue</span><span class="v"><span class="j" data-min="0" data-max="8">3</span> jobs · ETA 00:12</span></div>
+            <div class="acts">
+              <button class="act" data-off="⏸ Pause SABnzbd" data-on="▶ SAB paused"><span class="led"></span><span class="lbl">⏸ Pause SABnzbd</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="col" style="flex:1">
+          <div class="card" style="flex:1"><h3>qbt-se &nbsp;<span class="sub">Sweden exit</span></h3>
+            <div class="kv"><span>↓ / ↑</span><span class="v"><span class="j" data-min="0" data-max="22" data-suf="">11</span> / <span class="j" data-min="0" data-max="6">2</span> MB/s</span></div>
+            <div class="kv"><span>Active / Total</span><span class="v">5 / 41</span></div>
+            <div class="acts">
+              <button class="act" data-off="⏸ Pause freeleech" data-on="▶ freeleech held"><span class="led"></span><span class="lbl">⏸ Pause freeleech</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="col" style="flex:1">
+          <div class="card" style="flex:1"><h3>qbt-br &nbsp;<span class="sub">Brazil exit</span></h3>
+            <div class="kv"><span>↓ / ↑</span><span class="v"><span class="j" data-min="0" data-max="22" data-suf="">7</span> / <span class="j" data-min="0" data-max="5">1</span> MB/s</span></div>
+            <div class="kv"><span>Active / Total</span><span class="v">3 / 22</span></div>
+            <div class="acts">
+              <button class="act" data-off="⏸ Pause freeleech" data-on="▶ freeleech held"><span class="led"></span><span class="lbl">⏸ Pause freeleech</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="col" style="flex:1.2">
+          <div class="card" style="flex:1"><h3>recent grabs</h3>
+            <div class="list">
+              <div class="li"><span>Some.Show.S03E04</span><span class="pill" style="background:#1d3a28;color:var(--ok)">imported</span></div>
+              <div class="li"><span>A.Movie.2024.2160p</span><span class="pill" style="background:#3a341d;color:var(--warn)">moving</span></div>
+              <div class="li"><span>Another.Show.S01E09</span><span class="pill" style="background:#1d3a28;color:var(--ok)">imported</span></div>
+            </div>
+            <div class="acts">
+              <button class="act global" data-off="🐢 Throttle all (alt speed limits)" data-on="🐢 Throttled — tap to release"><span class="led"></span><span class="lbl">🐢 Throttle all (alt speed limits)</span></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== NETWORK — Pi-hole + NAS (UniFi removed) ===== -->
+      <section class="view" data-v="Network">
+        <div class="col" style="flex:1">
+          <div class="card" style="flex:1;align-items:center;justify-content:center"><h3 style="align-self:flex-start">Pi-hole</h3>
+            <div class="donut"><div><b><span class="j" data-min="18" data-max="34" data-suf="%">26%</span></b><span class="sub">blocked</span></div></div>
+            <div class="kv" style="width:100%"><span>Queries (24h)</span><span class="v">128k</span></div>
+          </div>
+        </div>
+        <div class="col" style="flex:1">
+          <div class="card"><h3>Pi-hole resolver</h3>
+            <div class="kv"><span>Status</span><span class="v" style="color:var(--ok)">active</span></div>
+            <div class="kv"><span>Unbound upstream</span><span class="v" style="color:var(--ok)">ok</span></div>
+            <div class="kv"><span>Gravity domains</span><span class="v">1.2M</span></div>
+          </div>
+          <div class="card" style="flex:1">
+            <div class="acts" style="margin-top:0">
+              <button class="act global" data-off="⏸ Disable blocking 5 min" data-on="▶ blocking off (5:00)"><span class="led"></span><span class="lbl">⏸ Disable blocking 5 min</span></button>
+            </div>
+            <div class="sub">handy for a false-positive ad-block break; auto-re-enables</div>
+          </div>
+        </div>
+        <div class="col" style="flex:1.2">
+          <div class="card" style="flex:1"><h3>NAS — UNAS-4</h3>
+            <div class="kv"><span>Pool used</span><span class="v">38.4 / 72 TB</span></div>
+            <div class="bar"><i style="width:53%"></i></div>
+            <div class="kv"><span>RAID5 status</span><span class="v" style="color:var(--ok)">healthy</span></div>
+            <div class="kv"><span>M.2 write cache</span><span class="v" style="color:var(--warn)">~90% full</span></div>
+            <div class="kv"><span>Sustained write</span><span class="v">~30 MB/s</span></div>
+            <div class="sub">source: Glances-on-NFS (free) · +snmp_exporter for drive temps</div>
+          </div>
+        </div>
+      </section>
+
+     </div>
+    </div>
+    <div class="tabbar" id="tabs"></div>
+  </div>
+
+<script>
+  const VIEWS=[["Overview","▦"],["Nodes","🖥️"],["k3s","☸"],["Downloads","⬇"],["Network","🌐"]];
+  const HOSTS=["k3s-server","k3s-node-01","k3s-node-02","pihole","homeassistant"];
+  const K3S=["k3s-server","k3s-node-01","k3s-node-02"];
+
+  // tabs + dots
+  const tabs=document.getElementById('tabs'),dots=document.getElementById('dots');
+  VIEWS.forEach(([n,ic],i)=>{
+    const b=document.createElement('button');b.className='tab'+(i===0?' on':'');b.dataset.t=n;
+    b.innerHTML=`<span class="ic">${ic}</span>${n}`;b.onclick=()=>go(i);tabs.appendChild(b);
+    const d=document.createElement('i');if(i===0)d.className='on';dots.appendChild(d);
+  });
+
+  // sparkline path generator (placeholder load-avg ~3h, 24 samples)
+  function spark(){
+    let y=8+Math.random()*10,pts=[];
+    for(let i=0;i<24;i++){y=Math.max(2,Math.min(30,y+(Math.random()-.45)*5));pts.push([i/23*100,32-y]);}
+    const d='M'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+    return `<svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none">
+      <path d="${d} L100,32 L0,32 Z" fill="rgba(91,141,239,.14)"/>
+      <path d="${d}" fill="none" stroke="var(--accent)" stroke-width="1.6"/></svg>`;
+  }
+
+  // Overview node cards (3 k3s nodes)
+  const ovn=document.getElementById('ovNodes');
+  K3S.forEach(h=>{
+    const c=document.createElement('div');c.className='ncard';
+    c.innerHTML=`<div class="nhead"><span class="nm">${h}</span><span class="badge ok">Ready</span></div>
+      ${spark()}
+      <div class="nmetrics">
+        <div class="kv"><span>load 1m / 15m</span><span class="v"><span class="j" data-min="2" data-max="42" data-div="10">1.4</span> / <span class="j" data-min="2" data-max="30" data-div="10">0.9</span></span></div>
+        <div><div class="kv"><span>CPU</span><span class="v"><span class="j" data-min="5" data-max="80" data-suf="%">23%</span></span></div><div class="bar"><i data-bar style="width:23%"></i></div></div>
+        <div><div class="kv"><span>RAM</span><span class="v"><span class="j" data-min="25" data-max="80" data-suf="%">47%</span></span></div><div class="bar"><i data-bar style="width:47%"></i></div></div>
+      </div>`;
+    ovn.appendChild(c);
+  });
+
+  // Nodes grid (all hosts)
+  const ng=document.getElementById('nodeGrid');
+  HOSTS.forEach(h=>{
+    const c=document.createElement('div');c.className='card';
+    c.innerHTML=`<h3>${h}</h3>
+      <div><div class="kv"><span>CPU</span><span class="v"><span class="j" data-min="5" data-max="80" data-suf="%">23%</span></span></div><div class="bar"><i data-bar style="width:23%"></i></div></div>
+      <div><div class="kv"><span>MEM</span><span class="v"><span class="j" data-min="20" data-max="85" data-suf="%">47%</span></span></div><div class="bar"><i data-bar style="width:47%"></i></div></div>
+      <div><div class="kv"><span>DISK</span><span class="v"><span class="j" data-min="30" data-max="92" data-suf="%">61%</span></span></div><div class="bar"><i data-bar style="width:61%"></i></div></div>
+      <div class="kv"><span>Temp</span><span class="v"><span class="j" data-min="38" data-max="74" data-suf="°C">52°C</span></span></div>`;
+    ng.appendChild(c);
+  });
+
+  // ---- navigation: tap + swipe ----
+  let idx=0;const track=document.getElementById('track');
+  function go(i){
+    idx=Math.max(0,Math.min(VIEWS.length-1,i));
+    track.style.transform=`translateX(-${idx*20}%)`;
+    document.querySelectorAll('.tab').forEach((t,k)=>t.classList.toggle('on',k===idx));
+    document.querySelectorAll('#dots i').forEach((d,k)=>d.classList.toggle('on',k===idx));
+    document.getElementById('vname').textContent=VIEWS[idx][0];
+  }
+  const content=document.getElementById('content');
+  let sx=0,sy=0,drag=false,onBtn=false;
+  function down(e){const p=e.touches?e.touches[0]:e;sx=p.clientX;sy=p.clientY;drag=true;onBtn=!!e.target.closest('.act');}
+  function up(e){
+    if(!drag)return;drag=false;
+    const p=e.changedTouches?e.changedTouches[0]:e;
+    const dx=p.clientX-sx,dy=p.clientY-sy;
+    if(onBtn)return;                                  // let button taps through
+    if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)) go(idx+(dx<0?1:-1));
+  }
+  content.addEventListener('touchstart',down,{passive:true});
+  content.addEventListener('touchend',up);
+  content.addEventListener('mousedown',down);
+  window.addEventListener('mouseup',up);
+
+  // ---- action toggle buttons (visual mock only) ----
+  document.querySelectorAll('.act').forEach(b=>{
+    const lbl=b.querySelector('.lbl');
+    b.addEventListener('click',()=>{
+      b.classList.toggle('active');
+      lbl.textContent=b.classList.contains('active')?b.dataset.on:b.dataset.off;
+    });
+  });
+
+  // clock
+  setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString();},1000);
+
+  // jitter placeholders
+  function color(p){return p<60?'var(--ok)':p<85?'var(--warn)':'var(--bad)';}
+  function tick(){
+    document.querySelectorAll('.j').forEach(s=>{
+      const mn=+s.dataset.min,mx=+s.dataset.max,dv=+s.dataset.div||1;
+      const suf=s.dataset.suf!==undefined?s.dataset.suf:(s.textContent.includes('%')?'%':'');
+      let v=mn+Math.random()*(mx-mn);
+      s.textContent=(dv>1?(v/dv).toFixed(1):Math.round(v))+suf;
+      const bar=s.closest('.kv')?.parentElement?.querySelector('[data-bar]');
+      if(bar){const pc=Math.min(100,v);bar.style.width=pc+'%';bar.style.background=color(pc);}
+    });
+    // ingest band: combined down vs ~30 MB/s NAS ceiling (scale 0..80)
+    const sab=Math.random()*46,se=Math.random()*20,br=Math.random()*18,tot=sab+se+br,SC=80;
+    document.getElementById('segSab').style.width=(sab/SC*100)+'%';
+    document.getElementById('segSe').style.width=(se/SC*100)+'%';
+    document.getElementById('segBr').style.width=(br/SC*100)+'%';
+    document.getElementById('itot').textContent=Math.round(tot)+' MB/s';
+    const st=document.getElementById('istat');
+    if(tot<24){st.className='istat ok';st.textContent='OK';}
+    else if(tot<34){st.className='istat warn';st.textContent='NEAR LIMIT';}
+    else{st.className='istat bad';st.textContent='OVER — queue will back up';}
+  }
+  tick();setInterval(tick,1700);
+
+  // scaling
+  function setScale(m){
+    const d=document.getElementById('dev');
+    if(m==='fit'){const s=Math.min(1,(window.innerWidth-60)/1280);d.style.transform=`scale(${s})`;d.style.marginBottom=(s<1?-(400*(1-s)):0)+'px';}
+    else{d.style.transform='scale(1)';d.style.marginBottom='0';}
+  }
+  window.addEventListener('resize',()=>setScale('fit'));
+  setScale('fit');
+</script>
+</body>
+</html>
