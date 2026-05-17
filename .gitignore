@@ -1,0 +1,17 @@
+# Go build output
+/bin/
+
+# Embedded SPA build artifact (produced by `make web`, never committed)
+/server/webdist/*
+!/server/webdist/.gitkeep
+
+# Frontend
+/web/node_modules/
+/web/dist/
+/web/.vite/
+/web/tsconfig.tsbuildinfo
+
+# Local env / editor
+*.local
+.env
+.DS_Store
