@@ -1,0 +1,28 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: ['config:recommended'],
+  // Match the homelab repo: updates batched for review, never floating tags.
+  schedule: ['every weekend'],
+  rangeStrategy: 'pin',
+  packageRules: [
+    {
+      // The React/Vite toolchain moves fast — keep it grouped, not noisy.
+      matchManagers: ['npm'],
+      groupName: 'web deps',
+    },
+    {
+      matchManagers: ['gomod'],
+      groupName: 'go deps',
+    },
+  ],
+  // Pin the Go toolchain version in the Dockerfile too.
+  customManagers: [
+    {
+      customType: 'regex',
+      managerFilePatterns: ['/^Dockerfile$/'],
+      matchStrings: ['FROM golang:(?<currentValue>\\S+)-alpine'],
+      depNameTemplate: 'golang',
+      datasourceTemplate: 'docker',
+    },
+  ],
+}
