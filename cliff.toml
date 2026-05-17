@@ -1,0 +1,53 @@
+# git-cliff configuration — generates the GitHub Release notes for each
+# `vX.Y.Z` tag (see .github/workflows/release.yml). Notes quality depends on
+# Conventional Commits: feat:, fix:, perf:, refactor:, docs:, chore(deps): …
+# Renovate already opens its PRs that way; keep hand-written commits in style.
+
+[changelog]
+# Rendered as the GitHub Release body (no file is committed back to the repo).
+header = ""
+body = """
+{% if version %}\
+## {{ version }} — {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+## Unreleased
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}\
+- {{ commit.message | split(pat="\n") | first | upper_first }} \
+([`{{ commit.id | truncate(length=7, end="") }}`](https://github.com/mathielo/homelab-kiosk/commit/{{ commit.id }}))
+{% endfor %}\
+{% endfor %}\n
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+# Normalize a few non-conventional prefixes seen in early history.
+commit_preprocessors = [
+  { pattern = '^Initial commit.*', replace = 'chore: initial commit' },
+]
+# Group labels carry a hidden <!-- N --> ordering prefix (stripped in the
+# template) so sections render Features-first, not alphabetically.
+commit_parsers = [
+  { message = "^feat", group = "<!-- 0 -->Features" },
+  { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
+  { message = "^perf", group = "<!-- 2 -->Performance" },
+  { message = "^refactor", group = "<!-- 3 -->Refactor" },
+  { message = "^docs", group = "<!-- 4 -->Documentation" },
+  { message = "^test", group = "<!-- 5 -->Testing" },
+  { message = "^chore\\(ci\\)", group = "<!-- 6 -->CI/CD" },
+  { message = "^chore\\(deps\\)", group = "<!-- 7 -->Dependencies" },
+  { message = "^(chore|ci|build|style)", skip = true },
+  { message = "^revert", group = "<!-- 8 -->Reverts" },
+  { message = ".*", group = "<!-- 9 -->Other" },
+]
+protect_breaking_commits = true
+filter_commits = false
+tag_pattern = "v[0-9].*"
+topo_order = false
+sort_commits = "oldest"

@@ -115,8 +115,7 @@ make build && ./bin/kiosk       # SPA + API on :8080
 npm --prefix web run dev        # Vite proxies /api → :8080
 ```
 
-Tagging `vX.Y.Z` triggers `.github/workflows/release.yml`, which builds and
-pushes `ghcr.io/mathielo/homelab-kiosk:X.Y.Z`. The homelab repo pins that tag.
+Cutting a release is a manual button — see [Releasing](#releasing) below.
 
 ## Configuration (env — injected from SOPS in-cluster)
 
@@ -137,6 +136,45 @@ pushes `ghcr.io/mathielo/homelab-kiosk:X.Y.Z`. The homelab repo pins that tag.
 
 Secrets are provided by the homelab repo's SOPS file at deploy time (this repo
 contains **no** secrets). See the homelab chart for the exact key list.
+
+## Releasing
+
+Releases are cut by hand from the Actions tab — there is no auto-tag-on-merge.
+
+1. **Actions → `release` → Run workflow**, enter a bare version number, digits
+   and dots only, e.g. `0.1.0` (no `v`, no pre-release suffixes — the input is
+   validated against `^[0-9]+\.[0-9]+\.[0-9]+$` and rejected otherwise).
+2. The `release` workflow then:
+   - renders release notes from the commit log with **git-cliff**
+     (config: [`cliff.toml`](cliff.toml)), grouped Features / Fixes / … ;
+   - creates and pushes the annotated tag **`v0.1.0`**;
+   - publishes a **GitHub Release** with those notes;
+   - calls the **`publish`** workflow, which builds and pushes
+     `ghcr.io/mathielo/homelab-kiosk:0.1.0` (+ `0.1`, `sha-…`).
+
+```
+release.yml  (workflow_dispatch: version=0.1.0)
+   ├─ validate semver + ensure tag is free
+   ├─ git-cliff  → release notes
+   ├─ git tag -a v0.1.0 && push
+   ├─ GitHub Release (notes)
+   └─ uses: publish.yml (tag=v0.1.0)  → ghcr.io/…:0.1.0
+```
+
+`publish.yml` is also wired to `push: tags: v*`, so a tag pushed **by a human**
+from a workstation still builds an image. A tag pushed by `release.yml` does
+**not** re-trigger it — GitHub suppresses workflow events from the built-in
+`GITHUB_TOKEN`, which is the whole reason `release.yml` *calls* `publish.yml`
+directly instead of relying on the tag push. Net effect for the maintainer: one
+button, one image, no double build.
+
+**Release-note quality depends on [Conventional Commits].** `feat:` / `fix:` /
+`perf:` / `refactor:` / `docs:` land in their own sections; `chore(deps):`
+(Renovate already does this) and `chore(ci):` get their own groups; bare
+`chore:` / `style:` / `build:` are omitted from notes. Keep hand-written commit
+subjects in that style or they fall into a generic "Other" bucket.
+
+[Conventional Commits]: https://www.conventionalcommits.org/
 
 ## Deployment
 

@@ -1,52 +1,80 @@
 name: release
 
-# Build and publish the kiosk image on a version tag (e.g. v0.1.0).
-# The homelab repo pins a specific tag and Renovate tracks it.
+# Manual "cut a release" entry point. You give it a bare semver number
+# (e.g. 0.1.0); it validates it, renders release notes from the commit
+# history with git-cliff (cliff.toml), creates and pushes the annotated
+# `v0.1.0` tag, publishes a GitHub Release with those notes, and then calls
+# the publish workflow to build & push the container image for that tag.
+#
+# Why publish is *called* and not triggered by the tag push: a tag pushed by
+# this workflow's GITHUB_TOKEN does not emit a `push` event (GitHub blocks
+# token-triggered workflow recursion), so we invoke publish.yml directly.
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, numbers only (e.g. 0.1.0). Creates tag v0.1.0."
+        required: true
+        type: string
 
-env:
-  IMAGE: ghcr.io/mathielo/homelab-kiosk
+permissions:
+  contents: write # create/push the tag + GitHub Release
+  packages: write # forwarded to the called publish workflow (GHCR push)
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  build-push:
+  release:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # git-cliff needs full history + tags
+
+      - name: Validate version & check tag is free
+        id: v
+        run: |
+          v="${{ inputs.version }}"
+          if [[ ! "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::version must be numeric semver like 0.1.0 (got '$v')"
+            exit 1
+          fi
+          if git rev-parse "v$v" >/dev/null 2>&1; then
+            echo "::error::tag v$v already exists"
+            exit 1
+          fi
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+
+      - name: Generate release notes
+        id: cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --tag ${{ steps.v.outputs.tag }} --unreleased --strip header
+
+      - name: Create & push tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.v.outputs.tag }}" -m "${{ steps.v.outputs.tag }}"
+          git push origin "${{ steps.v.outputs.tag }}"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.v.outputs.tag }}
+          name: ${{ steps.v.outputs.tag }}
+          body: ${{ steps.cliff.outputs.content }}
+
+  publish:
+    needs: release
+    uses: ./.github/workflows/publish.yml
     permissions:
       contents: read
       packages: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Derive image tags
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.IMAGE }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v4
-
-      # Cluster nodes are all amd64 — single-arch keeps the build fast.
-      - name: Build and push
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+    with:
+      tag: ${{ needs.release.outputs.tag }}

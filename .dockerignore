@@ -1,0 +1,25 @@
+# Keep the build context tiny and deterministic: the image is built purely
+# from sources (web/ + server/), with npm install / go build run inside the
+# stages. Host artifacts must never leak into the image.
+
+.git
+.github
+.env
+*.local
+.DS_Store
+
+# Go build output
+bin/
+
+# Frontend host artifacts (rebuilt in the `web` stage)
+web/node_modules/
+web/dist/
+web/.vite/
+web/tsconfig.tsbuildinfo
+
+# Embedded-SPA staging dir (rebuilt in the `server` stage from the web stage)
+server/webdist/
+
+# Docs / local-only files not needed to build the binary
+README.md
+deskpi-mock.html
