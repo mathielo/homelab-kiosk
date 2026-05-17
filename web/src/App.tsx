@@ -7,6 +7,7 @@ import { Network } from './tabs/Network'
 import { Services } from './tabs/Services'
 import { AlertsBell } from './components/AlertsBell'
 import { KeepAwake } from './components/KeepAwake'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 const VIEWS: Record<TabName, () => ReactElement> = {
   Overview,
@@ -86,7 +87,9 @@ export function App() {
             const View = VIEWS[name]
             return (
               <section className="view" key={name} style={{ width: `${100 / TABS.length}%` }}>
-                <View />
+                <ErrorBoundary label={name}>
+                  <View />
+                </ErrorBoundary>
               </section>
             )
           })}

@@ -47,6 +47,8 @@ body { background: #05070d; color: var(--ink); }
 .kv .v { font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .unavailable { display: flex; align-items: center; gap: 8px; color: var(--mut); font-size: 13px; padding: 8px 0; }
+.retry { margin-left: 10px; border: 1px solid #34415e; background: #1b2336; color: #cdd8ee; border-radius: 7px; padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.retry:active { transform: scale(.97); }
 .led { width: 8px; height: 8px; border-radius: 50%; background: #3a4763; display: inline-block; }
 .led.on { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
 .led.off { background: var(--bad); }

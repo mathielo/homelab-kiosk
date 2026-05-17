@@ -33,6 +33,14 @@ func newQbt(inst config.QBtInstance) *qbt {
 }
 
 func (q *qbt) login(ctx context.Context) error {
+	// No credentials configured → rely on qBittorrent's "bypass authentication
+	// for clients in whitelisted IP subnets" (the k3s pod CIDR 10.42.0.0/16 is
+	// whitelisted), so every in-cluster call is already authorized. Skipping
+	// login here is what makes the kiosk work with zero qBt secrets; creds stay
+	// supported for non-whitelisted contexts (e.g. local dev).
+	if q.inst.User == "" && q.inst.Pass == "" {
+		return nil
+	}
 	form := url.Values{"username": {q.inst.User}, "password": {q.inst.Pass}}
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost,
 		q.inst.URL+"/api/v2/auth/login", strings.NewReader(form.Encode()))

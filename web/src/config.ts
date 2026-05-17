@@ -58,12 +58,14 @@ export const QBT_INSTANCES = [{ name: 'se', label: 'qbt-se', exit: 'Sweden exit'
 /** ~30 MB/s sustained NAS write ceiling (see homelab qbt-br-migration.md). */
 export const NAS_WRITE_CEILING_MBPS = 30
 
-/**
- * NAS pool usage is read for free from node-exporter on a k3s node that
- * NFS-mounts the Media share (same RAID volume) — no UNAS scraper needed.
- * Drive temps would need snmp_exporter; intentionally out of scope here.
- */
-export const NAS = { promInstance: '10.10.50.10', mountpoint: '/var/nfs/shared/Media' }
+// NOTE: there is intentionally no NAS pool widget. The earlier assumption that
+// UNAS-4 usage could be read "for free" from node-exporter on a k3s node that
+// NFS-mounts the Media share is false: node-exporter excludes nfs/nfs4 by
+// default, so no node_filesystem_* series exists for the share (verified — zero
+// nfs results in Prometheus). Surfacing UNAS-4 needs a real exporter
+// (snmp_exporter against the UNAS, or a UniFi NAS scraper). Until that lands,
+// shipping a permanently-empty card would be worse than not having it — re-add
+// a NasCard here + on the Network tab once a source exists.
 
 export const TABS = ['Overview', 'Nodes', 'Downloads', 'Network', 'Services'] as const
 export type TabName = (typeof TABS)[number]
