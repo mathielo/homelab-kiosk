@@ -108,7 +108,7 @@ func (s *Service) state(w http.ResponseWriter, r *http.Request) {
 		ActionsEnabled bool       `json:"actionsEnabled"`
 		SabPaused      *bool      `json:"sabPaused"`
 		QBt            []qbtState `json:"qbt"`
-	}{ActionsEnabled: s.cfg.AllowActions}
+	}{ActionsEnabled: s.cfg.AllowActions, QBt: []qbtState{}}
 
 	if s.cfg.SabURL != "" {
 		if p, err := newSab(s.cfg.SabURL, s.cfg.SabAPIKey).paused(ctx); err == nil {

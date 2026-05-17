@@ -65,7 +65,7 @@ export function Downloads() {
   const st = usePolledResource(getState, POLL.live)
   const d = dl.data
   const actionsOff = st.data ? !st.data.actionsEnabled : false
-  const qbtState = (name: string) => st.data?.qbt.find((q) => q.name === name)
+  const qbtState = (name: string) => st.data?.qbt?.find((q) => q.name === name)
   const sabDl = d?.qbt ? d : null
 
   return (

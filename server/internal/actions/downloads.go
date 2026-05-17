@@ -20,7 +20,7 @@ func (s *Service) downloads(w http.ResponseWriter, r *http.Request) {
 		SabBps   *float64 `json:"sabBps"`
 		SabSlots *int     `json:"sabSlots"`
 		QBt      []qbtDl  `json:"qbt"`
-	}{}
+	}{QBt: []qbtDl{}}
 
 	if s.cfg.SabURL != "" {
 		if q, err := newSab(s.cfg.SabURL, s.cfg.SabAPIKey).queue(ctx); err == nil {
