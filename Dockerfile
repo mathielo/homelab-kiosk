@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- stage 1: build the SPA ---------------------------------------------------
-FROM node:26.1.0-alpine AS web
+FROM node:26.2.0-alpine AS web
 WORKDIR /web
 COPY web/package.json web/package-lock.json* ./
 RUN npm install
