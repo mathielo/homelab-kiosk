@@ -9,7 +9,7 @@ COPY web/ ./
 RUN npm run build
 
 # --- stage 2: build the Go binary (SPA embedded) ------------------------------
-FROM golang:1.26.3-alpine AS server
+FROM golang:1.27.1-alpine AS server
 WORKDIR /src
 COPY server/go.mod server/go.sum* ./server/
 RUN cd server && go mod download
